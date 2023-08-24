@@ -1,12 +1,10 @@
 package br.com.iwt.pizzaria.api.controller;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,37 +36,24 @@ public class ClienteController {
 	@GetMapping
 	public ResponseEntity<Page<ClienteModel>> listar(Pageable pageable){
 		
-		List<ClienteModel> clientes = assembler.toCollectionModel(service.retornarClientes(pageable));
-		
-		Page<ClienteModel> clientePageModel = new PageImpl<>(clientes,pageable, clientes.size());
-		
-		return ResponseEntity.ok(clientePageModel);
+		Page<ClienteModel> clientes = service.retornarClientes(pageable);
+			
+		return ResponseEntity.ok(clientes);
 	}
 	
 	@GetMapping("/{clienteId}")
 	public ResponseEntity<ClienteModel> listarPorId(@PathVariable UUID clienteId) {
 		
-		Cliente clienteResposta = service.retornarCliente(clienteId).orElse(null);
-		
-		if(clienteResposta != null) {
+			Cliente cliente = service.listarOrThrow(clienteId);
 			
-			ClienteModel model = assembler.toModel(clienteResposta);
-			
-			return ResponseEntity.ok(model);
-		}
-		
-		return ResponseEntity.notFound().build();
+			return ResponseEntity.ok(assembler.toModel(cliente));
 	}
 	
 	@PostMapping
 	//@ResponseStatus(HttpStatus.OK)
-	public ResponseEntity<ClienteInput> cadastrarCliente(@RequestBody ClienteInput clienteInput) {
+	public ResponseEntity<ClienteModel> cadastrarCliente(@RequestBody ClienteInput clienteInput) {
 		
-		Cliente clienteResposta = assembler.toEntity(clienteInput);
-				
-		service.salvar(clienteResposta);
-		
-		return ResponseEntity.ok(clienteInput);		
+		return ResponseEntity.ok(service.salvar(clienteInput));		
 	}
 	
 	@Transactional
@@ -83,21 +68,14 @@ public class ClienteController {
 	@PutMapping("/{clienteId}")
 	public ResponseEntity<ClienteModel> editarCliente(@PathVariable UUID clienteId, @RequestBody ClienteInput clienteInput) {
 		
-		Cliente clienteRes = service.retornarCliente(clienteId).orElse(null);
-		
-		if(clienteRes != null) {
+		Cliente clienteRes = service.listarOrThrow(clienteId);
 			
-			Cliente entidade = assembler.toEntity(clienteInput);
+		Cliente entidade = assembler.toEntity(clienteInput);
 	
-			BeanUtils.copyProperties(entidade, clienteRes,"id");
-			
-			Cliente clienteSalvo = service.salvar(clienteRes);
-			
-			ClienteModel modelo = assembler.toModel(clienteSalvo);
-			
-			return ResponseEntity.ok(modelo);
-		}
+		BeanUtils.copyProperties(entidade, clienteRes,"id");
 		
-		return ResponseEntity.notFound().build();
+		ClienteInput input = assembler.toInput(clienteRes);
+		
+		return ResponseEntity.ok(service.salvar(input));
 	}
 }

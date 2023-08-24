@@ -40,4 +40,8 @@ public class ClienteAssembler {
 	public Cliente toEntity(ClienteInput clienteInput) {
         return modelMapper.map(clienteInput, Cliente.class);
     }
+	
+	public ClienteInput toInput(Cliente cliente) {
+		return modelMapper.map(cliente, ClienteInput.class);
+	}
 }
