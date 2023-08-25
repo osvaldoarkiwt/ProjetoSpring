@@ -6,6 +6,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,11 +15,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.iwt.pizzaria.api.assembler.ClienteAssembler;
 import br.com.iwt.pizzaria.api.model.ClienteModel;
 import br.com.iwt.pizzaria.api.model.input.ClienteInput;
+import br.com.iwt.pizzaria.domain.filter.ClienteFilter;
 import br.com.iwt.pizzaria.domain.model.Cliente;
 import br.com.iwt.pizzaria.domain.service.CadastroClienteService;
 import jakarta.transaction.Transactional;
@@ -34,9 +37,9 @@ public class ClienteController {
 	ClienteAssembler assembler;
 	
 	@GetMapping
-	public ResponseEntity<Page<ClienteModel>> listar(Pageable pageable){
+	public ResponseEntity<Page<ClienteModel>> listar(ClienteFilter filter,Pageable pageable){
 		
-		Page<ClienteModel> clientes = service.retornarClientes(pageable);
+		Page<ClienteModel> clientes = service.retornarClientes(filter, pageable);
 			
 		return ResponseEntity.ok(clientes);
 	}
@@ -53,16 +56,17 @@ public class ClienteController {
 	//@ResponseStatus(HttpStatus.OK)
 	public ResponseEntity<ClienteModel> cadastrarCliente(@RequestBody ClienteInput clienteInput) {
 		
-		return ResponseEntity.ok(service.salvar(clienteInput));		
+		ClienteModel modelo = service.salvar(clienteInput);
+		
+		return ResponseEntity.ok(modelo);		
 	}
 	
 	@Transactional
 	@DeleteMapping("/{clienteId}")
-	public ResponseEntity<Cliente> deletarCliente(@PathVariable UUID clienteId) {
+	@ResponseStatus(value = HttpStatus.NOT_FOUND)
+	public void deletarCliente(@PathVariable UUID clienteId) {
 		
 		service.deletar(clienteId);
-		
-		return ResponseEntity.noContent().build();
 	}
 	
 	@PutMapping("/{clienteId}")

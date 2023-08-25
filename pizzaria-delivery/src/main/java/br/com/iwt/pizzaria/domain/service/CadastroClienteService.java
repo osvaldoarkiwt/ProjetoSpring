@@ -16,8 +16,10 @@ import br.com.iwt.pizzaria.api.model.ClienteModel;
 import br.com.iwt.pizzaria.api.model.input.ClienteInput;
 import br.com.iwt.pizzaria.domain.exception.EntidadeEmUsoException;
 import br.com.iwt.pizzaria.domain.exception.EntidadeNaoEncontradaException;
+import br.com.iwt.pizzaria.domain.filter.ClienteFilter;
 import br.com.iwt.pizzaria.domain.model.Cliente;
 import br.com.iwt.pizzaria.domain.repository.ClienteRepository;
+import br.com.iwt.pizzaria.domain.repository.spec.ClienteSpec;
 
 @Service
 public class CadastroClienteService {
@@ -30,13 +32,15 @@ public class CadastroClienteService {
 	@Autowired
 	ClienteAssembler assembler;
 	
-	public Page<ClienteModel> retornarClientes(Pageable pageable){
+	public Page<ClienteModel> retornarClientes(ClienteFilter filtro, Pageable pageable){
 		
-		List<ClienteModel> clientes = assembler.toCollectionModel(repositorio.findAll(pageable).getContent());
+		Page<Cliente> candidatoPages = repositorio.findAll(ClienteSpec.usandoFiltro(filtro), pageable);
 		
-		Page<ClienteModel> clientePageModel = new PageImpl<>(clientes,pageable, clientes.size());
+		List<ClienteModel> clientes = assembler.toCollectionModel(candidatoPages.getContent());
 		
-		return clientePageModel;
+		Page<ClienteModel> clientesModelPage = new PageImpl<>(clientes, pageable, clientes.size());
+		
+		return clientesModelPage;
 	}
 	
 	public Optional<Cliente> retornarCliente(UUID id) {
